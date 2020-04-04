@@ -29,7 +29,7 @@ void *update_local_date_wnd() {
         // free(local_date_string);
     }
     local_date_string = get_local_date();
-    mvwprintw(local_date_wnd, LOCAL_DATE_OUT_VPOS, LOCAL_DATE_OUT_HPOS, local_date_string);
+    
 }
 
 void *update_local_time_wnd() {
@@ -38,7 +38,7 @@ void *update_local_time_wnd() {
     }
 
     local_time_string = get_local_time();
-    mvwprintw(local_time_wnd, LOCAL_TIME_OUT_VPOS, LOCAL_TIME_OUT_HPOS, local_time_string);
+
 }
 
 void *update_elapsed_time_wnd() {
@@ -47,7 +47,7 @@ void *update_elapsed_time_wnd() {
     }
 
     elapsed_time_string = get_elapsed_time();
-    mvwprintw(elapsed_time_wnd, ELAPSED_TIME_OUT_VPOS, ELAPSED_TIME_OUT_HPOS, elapsed_time_string);
+
 
 }
 
@@ -74,7 +74,9 @@ void run() {
         pthread_join(local_date_thread, NULL);
         pthread_join(local_time_thread, NULL);
         pthread_join(elapsed_time_thread, NULL);
-
+        mvwprintw(local_date_wnd, LOCAL_DATE_OUT_VPOS, LOCAL_DATE_OUT_HPOS, local_date_string);
+        mvwprintw(local_time_wnd, LOCAL_TIME_OUT_VPOS, LOCAL_TIME_OUT_HPOS, local_time_string);
+        mvwprintw(elapsed_time_wnd, ELAPSED_TIME_OUT_VPOS, ELAPSED_TIME_OUT_HPOS, elapsed_time_string);
         refresh();
         sleep(1);
     }
