@@ -3,7 +3,7 @@
 
 
 // essentials.h -- includes essential header files for this program - ncurses.h
-#include "essentials.h"
+#include "chat_timer.h"
 
 int main() {
     
