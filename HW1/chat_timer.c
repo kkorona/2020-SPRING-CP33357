@@ -18,8 +18,7 @@ void *get_local_date() {
 
     formatted_return = malloc(sizeof(char) * BUFFER_SIZE);
     strcpy(formatted_return, buffer);
-    //return formatted_return;
-    return buffer;
+    return formatted_return;
 }
 
 void *get_local_time() {
@@ -36,8 +35,7 @@ void *get_local_time() {
 
     formatted_return = malloc(sizeof(char) * BUFFER_SIZE);
     strcpy(formatted_return, buffer);
-    // return formatted_return;
-    return buffer;
+    return formatted_return;
 }
 
 void *get_elapsed_time() {
@@ -54,6 +52,5 @@ void *get_elapsed_time() {
     
     formatted_return = malloc(sizeof(char) * BUFFER_SIZE);
     strcpy(formatted_return, buffer);
-    // return formatted_return;
-    return buffer;
+    return formatted_return;
 }

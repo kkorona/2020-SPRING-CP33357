@@ -26,7 +26,7 @@ void init() {
 
 void *update_local_date_wnd() {
     if(local_date_string != NULL) {
-        // free(local_date_string);
+         free(local_date_string);
     }
     local_date_string = get_local_date();
     
@@ -34,7 +34,7 @@ void *update_local_date_wnd() {
 
 void *update_local_time_wnd() {
     if(local_time_string != NULL) {
-        // free(local_time_string);
+         free(local_time_string);
     }
 
     local_time_string = get_local_time();
@@ -43,7 +43,7 @@ void *update_local_time_wnd() {
 
 void *update_elapsed_time_wnd() {
     if(elapsed_time_string != NULL) {
-        // free(elapsed_time_string);
+         free(elapsed_time_string);
     }
 
     elapsed_time_string = get_elapsed_time();
@@ -58,8 +58,11 @@ void run() {
 
     while(1) {
         local_date_thread_return   = pthread_create(&local_date_thread,   NULL, update_local_date_wnd,   NULL);
+        sleep(1);
         local_time_thread_return   = pthread_create(&local_time_thread,   NULL, update_local_time_wnd,   NULL);
+        sleep(1);
         elapsed_time_thread_return = pthread_create(&elapsed_time_thread, NULL, update_elapsed_time_wnd, NULL);
+        sleep(1);
 
         if(local_date_thread_return) {
             printf("error in local_date_thread\n");
@@ -71,14 +74,13 @@ void run() {
             printf("error in elaped_timee_thread\n");
         }
 
-        pthread_join(local_date_thread, NULL);
-        pthread_join(local_time_thread, NULL);
-        pthread_join(elapsed_time_thread, NULL);
+        // pthread_join(local_date_thread, NULL);
+        // pthread_join(local_time_thread, NULL);
+        // pthread_join(elapsed_time_thread, NULL);
         mvwprintw(local_date_wnd, LOCAL_DATE_OUT_VPOS, LOCAL_DATE_OUT_HPOS, local_date_string);
         mvwprintw(local_time_wnd, LOCAL_TIME_OUT_VPOS, LOCAL_TIME_OUT_HPOS, local_time_string);
         mvwprintw(elapsed_time_wnd, ELAPSED_TIME_OUT_VPOS, ELAPSED_TIME_OUT_HPOS, elapsed_time_string);
         refresh();
-        sleep(1);
     }
 
 }
