@@ -1,12 +1,8 @@
-#ifndef CHAT_TIMER_H
-#define CHAT_TIMER_H
+#ifndef _CHAT_TIMER_H_
+#define _CHAT_TIMER_H_
 
-#include <time.h>
-
-const int BUFFER_SIZE = 80;
-
-void *get_current_date();
-void *get_current_time();
-void *get_elapsed_time(); 
+void *get_local_date(); 
+void *get_local_time();
+void *get_elapsed_time();
 
 #endif

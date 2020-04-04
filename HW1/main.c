@@ -11,9 +11,9 @@
 #include <stdlib.h>
 #include <ncurses.h>
 #include <unistd.h>
-
+#include <stdio.h>
 WINDOW *local_date_wnd, *local_time_wnd, *elapsed_time_wnd;
-
+char* local_date_string = NULL, *local_time_string = NULL, *elapsed_time_string = NULL;
 void init() {
     initscr();
     local_date_wnd      = subwin( stdscr, LOCAL_DATE_VLINE,   LOCAL_DATE_HLINE,   LOCAL_DATE_VPOS,   LOCAL_DATE_HPOS   );
@@ -24,26 +24,31 @@ void init() {
     box( elapsed_time_wnd, '|', '-' );
 }
 
-void *update_text_on_screen( WINDOW *target_window, int vpos, int hpos, void* message ) {
-    mvwprintw( target_window, vpos, hpos, (char*) message );
-}
-
 void *update_local_date_wnd() {
-    // char* local_date_string = get_local_date();
-    char* local_date_string = "LOCAL_DATE";
-    update_text_on_screen( local_date_wnd, LOCAL_DATE_OUT_VPOS, LOCAL_DATE_OUT_HPOS, local_date_string ); 
+    if(local_date_string != NULL) {
+        // free(local_date_string);
+    }
+    local_date_string = get_local_date();
+    mvwprintw(local_date_wnd, LOCAL_DATE_OUT_VPOS, LOCAL_DATE_OUT_HPOS, local_date_string);
 }
 
 void *update_local_time_wnd() {
-    // char* local_time_string = get_local_time();
-    char* local_time_string = "LOCAL_TIME";
-    update_text_on_screen( local_time_wnd, LOCAL_TIME_OUT_VPOS, LOCAL_TIME_OUT_HPOS, local_time_string ); 
+    if(local_time_string != NULL) {
+        // free(local_time_string);
+    }
+
+    local_time_string = get_local_time();
+    mvwprintw(local_time_wnd, LOCAL_TIME_OUT_VPOS, LOCAL_TIME_OUT_HPOS, local_time_string);
 }
 
 void *update_elapsed_time_wnd() {
-    // char* elapsed_time_string = get_elapsed_time();
-    char* elapsed_time_string = "ELAPSED_TIME";
-    update_text_on_screen( elapsed_time_wnd, ELAPSED_TIME_OUT_VPOS, ELAPSED_TIME_OUT_HPOS, elapsed_time_string ); 
+    if(elapsed_time_string != NULL) {
+        // free(elapsed_time_string);
+    }
+
+    elapsed_time_string = get_elapsed_time();
+    mvwprintw(elapsed_time_wnd, ELAPSED_TIME_OUT_VPOS, ELAPSED_TIME_OUT_HPOS, elapsed_time_string);
+
 }
 
 void run() {
@@ -52,15 +57,26 @@ void run() {
     int         local_date_thread_return, local_time_thread_return, elapsed_time_thread_return;   
 
     while(1) {
-        refresh();
-
         local_date_thread_return   = pthread_create(&local_date_thread,   NULL, update_local_date_wnd,   NULL);
         local_time_thread_return   = pthread_create(&local_time_thread,   NULL, update_local_time_wnd,   NULL);
         elapsed_time_thread_return = pthread_create(&elapsed_time_thread, NULL, update_elapsed_time_wnd, NULL);
 
-        pthread_join(local_date_thread_return, NULL);
-        pthread_join(local_time_thread_return, NULL);
-        pthread_join(elapsed_time_thread_return, NULL);
+        if(local_date_thread_return) {
+            printf("error in local_date_thread\n");
+        }
+        if(local_time_thread_return) {
+            printf("error in local_time_thread\n");
+        }
+        if(elapsed_time_thread_return) {
+            printf("error in elaped_timee_thread\n");
+        }
+
+        pthread_join(local_date_thread, NULL);
+        pthread_join(local_time_thread, NULL);
+        pthread_join(elapsed_time_thread, NULL);
+
+        refresh();
+        sleep(1);
     }
 
 }
