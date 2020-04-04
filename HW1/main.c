@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <ncurses.h>
 #include <unistd.h>
-#include <stdio.h>
+
 WINDOW *local_date_wnd, *local_time_wnd, *elapsed_time_wnd;
 char* local_date_string = NULL, *local_time_string = NULL, *elapsed_time_string = NULL;
 void init() {
@@ -19,9 +19,6 @@ void init() {
     local_date_wnd      = subwin( stdscr, LOCAL_DATE_VLINE,   LOCAL_DATE_HLINE,   LOCAL_DATE_VPOS,   LOCAL_DATE_HPOS   );
     local_time_wnd      = subwin( stdscr, LOCAL_TIME_VLINE,   LOCAL_TIME_HLINE,   LOCAL_TIME_VPOS,   LOCAL_TIME_HPOS   );
     elapsed_time_wnd    = subwin( stdscr, ELAPSED_TIME_VLINE, ELAPSED_TIME_HLINE, ELAPSED_TIME_VPOS, ELAPSED_TIME_HPOS );
-    box( local_date_wnd,   '|', '-' );
-    box( local_time_wnd,   '|', '-' );
-    box( elapsed_time_wnd, '|', '-' );
 }
 
 void *update_local_date_wnd() {
@@ -29,7 +26,7 @@ void *update_local_date_wnd() {
          free(local_date_string);
     }
     local_date_string = get_local_date();
-    
+    return NULL;
 }
 
 void *update_local_time_wnd() {
@@ -38,7 +35,7 @@ void *update_local_time_wnd() {
     }
 
     local_time_string = get_local_time();
-
+    return NULL;
 }
 
 void *update_elapsed_time_wnd() {
@@ -47,7 +44,7 @@ void *update_elapsed_time_wnd() {
     }
 
     elapsed_time_string = get_elapsed_time();
-
+    return NULL;
 
 }
 
@@ -55,8 +52,14 @@ void run() {
 
     pthread_t   local_date_thread, local_time_thread, elapsed_time_thread;
     int         local_date_thread_return, local_time_thread_return, elapsed_time_thread_return;   
-
+    int cnt = 0;
     while(1) {
+        clear();
+
+        box( local_date_wnd,   '|', '-' );
+        box( local_time_wnd,   '|', '-' );
+        box( elapsed_time_wnd, '|', '-' );
+
         local_date_thread_return   = pthread_create(&local_date_thread,   NULL, update_local_date_wnd,   NULL);
         pthread_join(local_date_thread, NULL);
         local_time_thread_return   = pthread_create(&local_time_thread,   NULL, update_local_time_wnd,   NULL);
@@ -65,13 +68,13 @@ void run() {
         pthread_join(elapsed_time_thread, NULL);
 
         if(local_date_thread_return) {
-            printf("error in local_date_thread\n");
+            mvprintw(18, 2, " * error in local_date_thread   *");
         }
         if(local_time_thread_return) {
-            printf("error in local_time_thread\n");
+            mvprintw(19, 2, " * error in local_time_thread   *");
         }
         if(elapsed_time_thread_return) {
-            printf("error in elaped_timee_thread\n");
+            mvprintw(20, 2, " * error in elaped_timee_thread *");
         }
 
         mvwprintw(local_date_wnd, LOCAL_DATE_OUT_VPOS, LOCAL_DATE_OUT_HPOS, local_date_string);
