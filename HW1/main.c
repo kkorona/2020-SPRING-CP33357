@@ -61,10 +61,10 @@ void run() {
         box( elapsed_time_wnd, '|', '-' );
 
         local_date_thread_return   = pthread_create(&local_date_thread,   NULL, update_local_date_wnd,   NULL);
-        pthread_join(local_date_thread, NULL);
         local_time_thread_return   = pthread_create(&local_time_thread,   NULL, update_local_time_wnd,   NULL);
-        pthread_join(local_date_thread, NULL);
         elapsed_time_thread_return = pthread_create(&elapsed_time_thread, NULL, update_elapsed_time_wnd, NULL);
+        pthread_join(local_date_thread, NULL);
+        pthread_join(local_time_thread, NULL);
         pthread_join(elapsed_time_thread, NULL);
 
         if(local_date_thread_return) {
