@@ -1,13 +1,10 @@
-total: shmread shmwrite shmremove
+total: chat shmremove
 
-shmread: shmread.c chatshm.h
-	gcc -o shmread shmread.c
-
-shmwrite: shmwrite.c chatshm.h
-	gcc -o shmwrite shmwrite.c
+chat: chat.c chatshm.h
+	gcc -o chat chat.c -Wall
 
 shmremove: shmremove.c chatshm.h
-	gcc -o shmremove shmremove.c
+	gcc -o shmremove shmremove.c -Wall
 
 clean:
-	rm shmread shmwrite shmremove
+	rm chat shmremove

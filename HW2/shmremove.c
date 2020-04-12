@@ -6,9 +6,6 @@
 
 int main() {
     int         shmid;
-    CHAT_INFO   *chatInfo = NULL;
-
-    void *shmaddr = (void*) 0;
 
     shmid = shmget((key_t)SHARED_MEMORY_KEY, sizeof(CHAT_INFO), 0666);
 
