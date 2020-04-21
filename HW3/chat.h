@@ -1,9 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <ncurses.h>
+#ifndef _CHAT_H_
+#define _CHAT_H_
 
 #define INPUT_WINDOW_H 2
 #define BUFFSIZE 1024
@@ -34,3 +30,5 @@ void *update_time();
 void cleanup();
 
 void die(char *s);
+
+#endif
