@@ -23,11 +23,11 @@ int is_running;
 
 void chat();
 
-void* print_chat();
+void *get_input();
 
-void* get_input();
+void *print_chat();
 
-void* recv_send();
+void *recv_send();
 
 void cleanup();
 
