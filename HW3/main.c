@@ -44,6 +44,7 @@ void *get_input() {
         wrefresh(input_scr);
         usleep(100);
     }
+    return NULL;
 }
 
 void *print_chat() {
@@ -62,6 +63,7 @@ void *print_chat() {
         
         usleep(100);
     }
+    return NULL;
 }
 
 void *recv_send() {
@@ -79,8 +81,9 @@ void *recv_send() {
         else {
             buff_out.id++;
         }
-        usleep(100);
+        sleep(3);
     }
+    return NULL;
 }
 
 void cleanup() {
