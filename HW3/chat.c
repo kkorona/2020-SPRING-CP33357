@@ -123,6 +123,7 @@ void *log_account() {
         box( acclog_scr, '|', '-' );
         sprintf(cntstr, "%d", cnt++);
         wprintw(acclog_scr, cntstr);
+        wrefresh(acclog_scr);
         sleep(1);
     }
     return NULL;
