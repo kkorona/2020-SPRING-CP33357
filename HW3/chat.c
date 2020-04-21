@@ -114,8 +114,20 @@ void *recv_send() {
     return NULL;
 }
 
+void *log_account() {
+    int cnt = 1;
+    char cntstr[100];
+    while(is_running) {
+        box( time_scr, '|', '-' );
+        sprintf(cntstr, "%s", cnt++);
+        wprintw(acclog_scr, cntstr);
+        sleep(1);
+    }
+}
+
 void *update_time() {
     while(is_running) {
+        box( time_scr, '|', '-' );
         // relase allocation of previous timer values
         
         // local date options is temporarily deprecated.
