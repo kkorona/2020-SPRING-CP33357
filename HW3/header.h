@@ -29,6 +29,8 @@ void *print_chat();
 
 void *recv_send();
 
+void *update_time();
+
 void cleanup();
 
 void die(char *s);

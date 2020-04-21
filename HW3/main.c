@@ -1,114 +1,133 @@
-#include "header.h"
+﻿// main.c -- CP33357 assignment #1, Spring 2020
+// main routine & thread controls of this program
+// S. U. Park, id #201624476, April 3rd, 2020
 
-WINDOW *input_scr;
-WINDOW *chat_scr;
+// preference.h -- header file contains initialized values for preference options of this program
+#include "preference.h"
 
-void chat() {
-    input_scr = newwin(INPUT_WINDOW_H, col, row-INPUT_WINDOW_H, 0);
-    chat_scr = newwin(row-INPUT_WINDOW_H, col, 0, 0);
+// chat_timer.h -- incldes functions returns current date & time & elapsed execution time
+#include "chat_timer.h"
+
+#include <pthread.h>
+#include <stdlib.h>
+#include <ncurses.h>
+#include <unistd.h>
+
+WINDOW *local_date_wnd, *local_time_wnd, *elapsed_time_wnd;     // subwindow of each timer
+
+char* local_date_string = NULL, *local_time_string = NULL, *elapsed_time_string = NULL; // formatted output value of each timer
+
+// initialize screen prefernce with ncurses.
+void init() {
     
-    scrollok(chat_scr, TRUE);
-    wprintw(chat_scr, "\n ***** Type /exit to quit!! ***** \n\n");
-    wrefresh(chat_scr);
+    // initialize stdscr of ncurses
+    initscr();
     
-    buff_in.id = 0;
-    buff_out.id = 0;
-    is_running = 1;
-    
-    pthread_t thread[3];
-    
-    pthread_create(&thread[0], NULL, get_input, NULL);
-    pthread_create(&thread[1], NULL, print_chat, NULL);
-    pthread_create(&thread[2], NULL, recv_send, NULL);
-    
-    pthread_join(thread[0], NULL);
-    pthread_join(thread[1], NULL);
-    pthread_join(thread[2], NULL);
-    
+    //generate & initialize subwindows for timers with size/position values in preference.h
+    local_date_wnd      = subwin( stdscr, LOCAL_DATE_VLINE,   LOCAL_DATE_HLINE,   LOCAL_DATE_VPOS,   LOCAL_DATE_HPOS   );
+    local_time_wnd      = subwin( stdscr, LOCAL_TIME_VLINE,   LOCAL_TIME_HLINE,   LOCAL_TIME_VPOS,   LOCAL_TIME_HPOS   );
+    elapsed_time_wnd    = subwin( stdscr, ELAPSED_TIME_VLINE, ELAPSED_TIME_HLINE, ELAPSED_TIME_VPOS, ELAPSED_TIME_HPOS );
 }
 
-void *get_input() {
-    char tmp[BUFFSIZE];
-    mvwhline(input_scr, 0, 0, 0, col);
-    while(is_running) {
-        mvwgetstr(input_scr, 1, 0, tmp);
-        sprintf(buff_in.msg, "%s\n", tmp);
-        if(strcmp(buff_in.msg, "/exit\n") == 0) {
-            die("exit");
-        }
-        wprintw(chat_scr, "[Send: %d] > %s", buff_in.id, buff_in.msg);
-        buff_in.id++;
-        wrefresh(chat_scr);
-        werase(input_scr);
-        mvwhline(input_scr, 0, 0, 0, col);
-        wrefresh(input_scr);
-        usleep(100);
+// update local_date_string with current local date
+void *update_local_date() {
+    
+    // relase allocation of previous local date value
+    if(local_date_string != NULL) {
+         free(local_date_string);
     }
+    
+    // update the current local date
+    local_date_string = get_local_date();
     return NULL;
 }
 
-void *print_chat() {
-    char *msg;
-    char buff[BUFFSIZE];
+// update local_time_string with current local time
+void *update_local_time() {
     
-    struct message_buffer oldmsg;
-    oldmsg.id = 0;
+    // relase allocation of previous local time value
+    if(local_time_string != NULL) {
+         free(local_time_string);
+    }
+
+    // update the current local time
+    local_time_string = get_local_time();
+    return NULL;
+}
+
+// update local_time_string with elapsed execution time
+void *update_elapsed_time() {
     
-    while(is_running) {
-        if(oldmsg.id != buff_out.id) {
-            wprintw(chat_scr, buff_out.msg);
-            oldmsg.id = buff_out.id;
-            wrefresh(chat_scr);
-        }
+    // relase allocation of previous local time value
+    if(elapsed_time_string != NULL) {
+         free(elapsed_time_string);
+    }
+
+    // update the elapsed execution time
+    elapsed_time_string = get_elapsed_time();
+    return NULL;
+
+}
+
+// main routine of this program
+void run() {
+
+    pthread_t   local_date_thread, local_time_thread, elapsed_time_thread;                          // pthread_t variables of each thread
+    int         local_date_thread_return, local_time_thread_return, elapsed_time_thread_return;     // result values of each thread execution
+    
+    
+    while(1) {
         
-        usleep(100);
-    }
-    return NULL;
-}
+        // clear the screen
+        clear();
 
-void *recv_send() {
-    struct message_buffer oldmsg;
-    oldmsg.id = 0;
-    
-    while(is_running) {
-        memset(&(*buff_out.msg), 0, BUFFSIZE);
-        sprintf(buff_out.msg, "[Recv: %d] %s\n", buff_out.id, "Chat Test");
-        if(strcmp(buff_out.msg, "/exit\n") == 0) {
-            fprintf(stderr, "Chat is closed\n");
-            is_running = 0;
-            break;
+        // draw borders of each timer window
+        box( local_date_wnd,   '|', '-' );
+        box( local_time_wnd,   '|', '-' );
+        box( elapsed_time_wnd, '|', '-' );
+
+        // allocate each timer update function to threads
+        local_date_thread_return   = pthread_create(&local_date_thread,   NULL, update_local_date,   NULL);
+        local_time_thread_return   = pthread_create(&local_time_thread,   NULL, update_local_time,   NULL);
+        elapsed_time_thread_return = pthread_create(&elapsed_time_thread, NULL, update_elapsed_time, NULL);
+        
+        // join the threads
+        pthread_join(local_date_thread, NULL);
+        pthread_join(local_time_thread, NULL);
+        pthread_join(elapsed_time_thread, NULL);
+
+
+        // check errors of each return of thread
+        // returns message under timer windows when error occured
+        if(local_date_thread_return) {
+            mvprintw(18, 2, " * error in local_date_thread   *");
         }
-        else {
-            buff_out.id++;
+        if(local_time_thread_return) {
+            mvprintw(19, 2, " * error in local_time_thread   *");
         }
-        sleep(3);
+        if(elapsed_time_thread_return) {
+            mvprintw(20, 2, " * error in elaped_timee_thread *");
+        }
+
+
+        // prints the updated timer values on each subwindow
+        mvwprintw(local_date_wnd, LOCAL_DATE_OUT_VPOS, LOCAL_DATE_OUT_HPOS, local_date_string);
+        mvwprintw(local_time_wnd, LOCAL_TIME_OUT_VPOS, LOCAL_TIME_OUT_HPOS, local_time_string);
+        mvwprintw(elapsed_time_wnd, ELAPSED_TIME_OUT_VPOS, ELAPSED_TIME_OUT_HPOS, elapsed_time_string);
+        
+        // refresh the screen
+        refresh();
     }
-    return NULL;
-}
 
-void cleanup() {
-    delwin(input_scr);
-    delwin(chat_scr);
-    endwin();
-}
-
-void die(char *s) {
-    delwin(input_scr);
-    delwin(chat_scr);
-    endwin();
-    perror(s);
-    exit(-1);
 }
 
 int main() {
-    
-    initscr();
-    
-    getmaxyx(stdscr, row, col);
-    
-    chat();
-    
-    endwin();
-    
+   
+    // initialize screen prefernce with ncurses.
+    init(); 
+   
+    // run the main routine
+    run(); 
+
     return 0;
 }
