@@ -22,12 +22,12 @@ void init_position() {
     acclog_scr = newwin(ACCLOG_WINDOW_VLINE, ACCLOG_WINDOW_HLINE, ACCLOG_WINDOW_VPOS, ACCLOG_WINDOW_HPOS);
     timer_scr = newwin(TIMER_WINDOW_VLINE, TIMER_WINDOW_HLINE, TIMER_WINDOW_VPOS, TIMER_WINDOW_HPOS);
     
-    // local date timer is temporarily deprecated.
+    // local date timer subwindow is temporarily deprecated.
     /*
     local_date_wnd      = subwin( timer_scr, LOCAL_DATE_VLINE,   LOCAL_DATE_HLINE,   LOCAL_DATE_VPOS,   LOCAL_DATE_HPOS   );
-    */
     local_time_wnd      = subwin( timer_scr, LOCAL_TIME_VLINE,   LOCAL_TIME_HLINE,   LOCAL_TIME_VPOS,   LOCAL_TIME_HPOS   );
     elapsed_time_wnd    = subwin( timer_scr, ELAPSED_TIME_VLINE, ELAPSED_TIME_HLINE, ELAPSED_TIME_VPOS, ELAPSED_TIME_HPOS );   
+    */
     
     scrollok(chat_scr, TRUE);
     wprintw(chat_scr, "\n ***** Type /bye to quit!! ***** \n\n");
@@ -123,6 +123,7 @@ void *log_account() {
         wprintw(acclog_scr, cntstr);
         sleep(1);
     }
+    return NULL;
 }
 
 void *update_time() {
@@ -152,15 +153,12 @@ void *update_time() {
         
         /*
         mvwprintw(local_date_wnd, LOCAL_DATE_OUT_VPOS, LOCAL_DATE_OUT_HPOS, local_date_string);
-        */
         mvwprintw(local_time_wnd, LOCAL_TIME_OUT_VPOS, LOCAL_TIME_OUT_HPOS, local_time_string);
         mvwprintw(elapsed_time_wnd, ELAPSED_TIME_OUT_VPOS, ELAPSED_TIME_OUT_HPOS, elapsed_time_string);
+        */
         
-        /*
-        wrefresh(local_date_wnd);
-        */        
-        wrefresh(local_time_wnd);
-        wrefresh(elapsed_time_wnd);
+        mvwprintw(timer_scr, LOCAL_TIME_VPOS, LOCAL_TIME_HPOS, local_time_string);
+        mvwprintw(timer_scr, ELAPSED_TIME_VPOS, ELAPSED_TIME_HPOS, elapsed_time_string);
         wrefresh(timer_scr);
         usleep(500);
     }
@@ -171,12 +169,16 @@ void *update_time() {
 void cleanup() {
     delwin(input_scr);
     delwin(chat_scr);
+    delwin(acclog_scr);
+    delwin(timer_scr);
     endwin();
 }
 
 void die(char *s) {
     delwin(input_scr);
     delwin(chat_scr);
+    delwin(acclog_scr);
+    delwin(timer_scr);
     endwin();
     perror(s);
     exit(-1);
@@ -196,3 +198,4 @@ int main() {
     
     return 0;
 }
+
