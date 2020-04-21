@@ -1,4 +1,10 @@
-#include "header.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <ncurses.h>
+#include "chat.h"
 #include "preference.h"
 #include "chat_timer.h"
 
@@ -9,48 +15,6 @@ WINDOW *timer_scr;
 WINDOW *local_date_wnd, *local_time_wnd, *elapsed_time_wnd;     // subwindow of each timer
 
 char* local_date_string = NULL, *local_time_string = NULL, *elapsed_time_string = NULL; // formatted output value of each timer
-
-void *update_time() {
-    while(is_running) {
-        // relase allocation of previous timer values
-        
-        // local date options is temporarily deprecated.
-        /*
-        if(local_date_string != NULL) {
-             free(local_date_string);
-        }
-        */
-        if(local_time_string != NULL) {
-             free(local_time_string);
-        }
-        if(elapsed_time_string != NULL) {
-             free(elapsed_time_string);
-        }
-
-        // update the current timer values
-        /*
-        local_date_string = get_local_date();
-        */
-        local_time_string = get_local_time();
-        elapsed_time_string = get_elapsed_time();
-        
-        /*
-        mvwprintw(local_date_wnd, LOCAL_DATE_OUT_VPOS, LOCAL_DATE_OUT_HPOS, local_date_string);
-        */
-        mvwprintw(local_time_wnd, LOCAL_TIME_OUT_VPOS, LOCAL_TIME_OUT_HPOS, local_time_string);
-        mvwprintw(elapsed_time_wnd, ELAPSED_TIME_OUT_VPOS, ELAPSED_TIME_OUT_HPOS, elapsed_time_string);
-        
-        /*
-        wrefresh(local_date_wnd);
-        */        
-        wrefresh(local_time_wnd);
-        wrefresh(elapsed_time_wnd);
-        wrefresh(timer_scr);
-        usleep(500);
-    }
-    
-    return NULL;
-}
 
 void init_position() {
     input_scr = newwin(INPUT_WINDOW_VLINE, INPUT_WINDOW_HLINE, INPUT_WINDOW_VPOS, INPUT_WINDOW_HPOS);
@@ -147,6 +111,48 @@ void *recv_send() {
         }
         sleep(3);
     }
+    return NULL;
+}
+
+void *update_time() {
+    while(is_running) {
+        // relase allocation of previous timer values
+        
+        // local date options is temporarily deprecated.
+        /*
+        if(local_date_string != NULL) {
+             free(local_date_string);
+        }
+        */
+        if(local_time_string != NULL) {
+             free(local_time_string);
+        }
+        if(elapsed_time_string != NULL) {
+             free(elapsed_time_string);
+        }
+
+        // update the current timer values
+        /*
+        local_date_string = get_local_date();
+        */
+        local_time_string = get_local_time();
+        elapsed_time_string = get_elapsed_time();
+        
+        /*
+        mvwprintw(local_date_wnd, LOCAL_DATE_OUT_VPOS, LOCAL_DATE_OUT_HPOS, local_date_string);
+        */
+        mvwprintw(local_time_wnd, LOCAL_TIME_OUT_VPOS, LOCAL_TIME_OUT_HPOS, local_time_string);
+        mvwprintw(elapsed_time_wnd, ELAPSED_TIME_OUT_VPOS, ELAPSED_TIME_OUT_HPOS, elapsed_time_string);
+        
+        /*
+        wrefresh(local_date_wnd);
+        */        
+        wrefresh(local_time_wnd);
+        wrefresh(elapsed_time_wnd);
+        wrefresh(timer_scr);
+        usleep(500);
+    }
+    
     return NULL;
 }
 

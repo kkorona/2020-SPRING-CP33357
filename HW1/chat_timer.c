@@ -2,6 +2,7 @@
 // includes functions returns current date & time & elapsed execution time
 // S. U. Park, id #201624476, April 3rd, 2020
 
+#include "chat_timer.h"
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
