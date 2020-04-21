@@ -118,8 +118,8 @@ void *log_account() {
     int cnt = 1;
     char cntstr[100];
     while(is_running) {
-        box( time_scr, '|', '-' );
-        sprintf(cntstr, "%s", cnt++);
+        box( acclog_scr, '|', '-' );
+        sprintf(cntstr, "%d", cnt++);
         wprintw(acclog_scr, cntstr);
         sleep(1);
     }
@@ -127,7 +127,7 @@ void *log_account() {
 
 void *update_time() {
     while(is_running) {
-        box( time_scr, '|', '-' );
+        box( timer_scr, '|', '-' );
         // relase allocation of previous timer values
         
         // local date options is temporarily deprecated.
