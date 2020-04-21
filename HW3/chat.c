@@ -41,17 +41,19 @@ void run() {
     buff_out.id = 0;
     is_running = 1;
     
-    pthread_t thread[4];
+    pthread_t thread[5];
     
     pthread_create(&thread[0], NULL, get_input, NULL);
     pthread_create(&thread[1], NULL, print_chat, NULL);
     pthread_create(&thread[2], NULL, recv_send, NULL);
     pthread_create(&thread[3], NULL, update_time, NULL);
+    pthread_create(&thread[4], NULL, log_account, NULL);
         
     pthread_join(thread[0], NULL);
     pthread_join(thread[1], NULL);
     pthread_join(thread[2], NULL);
     pthread_join(thread[3], NULL);
+    pthread_join(thread[4], NULL);
     
 }
 
