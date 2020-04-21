@@ -27,6 +27,8 @@ void *recv_send();
 
 void *update_time();
 
+void *log_account();
+
 void cleanup();
 
 void die(char *s);
