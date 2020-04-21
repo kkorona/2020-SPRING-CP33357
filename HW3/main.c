@@ -33,14 +33,14 @@ void *get_input() {
     while(is_running) {
         mvwgetstr(input_scr, 1, 0, tmp);
         sprintf(buff_in.msg, "%s\n", tmp);
-        if(strcmp(buff_in.msg, "exit\n") == 0) {
+        if(strcmp(buff_in.msg, "/exit\n") == 0) {
             die("exit");
         }
         wprintw(chat_scr, "[Send: %d] > %s", buff_in.id, buff_in.msg);
         buff_in.id++;
         wrefresh(chat_scr);
         werase(input_scr);
-        mvwhline(chat_scr, 0, 0, 0, col);
+        mvwhline(input_scr, 0, 0, 0, col);
         wrefresh(input_scr);
         usleep(100);
     }
