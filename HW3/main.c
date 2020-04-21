@@ -5,7 +5,7 @@ WINDOW *chat_scr;
 
 void chat() {
     input_scr = newwin(INPUT_WINDOW_H, col, row-INPUT_WINDOW_H, 0);
-    chat_scr = newwin(row-INPUT_WINDOW_H, col, 0, 0,);
+    chat_scr = newwin(row-INPUT_WINDOW_H, col, 0, 0);
     
     scrollok(chat_scr, TRUE);
     wprintw(chat_scr, "\n ***** Type /exit to quit!! ***** \n\n");
