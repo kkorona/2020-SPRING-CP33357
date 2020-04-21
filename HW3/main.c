@@ -39,7 +39,7 @@ void *get_input() {
         wprintw(chat_scr, "[Send: %d] > %s", buff_in.id, buff_in.msg);
         buff_in.id++;
         wrefresh(chat_scr);
-        wrefresh(input_scr);
+        werase(input_scr);
         mvwhline(chat_scr, 0, 0, 0, col);
         wrefresh(input_scr);
         usleep(100);
@@ -47,13 +47,40 @@ void *get_input() {
 }
 
 void *print_chat() {
+    char *msg;
+    char buff[BUFFSIZE];
+    
+    struct message_buffer oldmsg;
+    oldmsg.id = 0;
+    
     while(is_running) {
+        if(oldmsg.id != buff_out.id) {
+            wprintw(chat_scr, buff_out.msg);
+            oldmsg.id = buff_out.id;
+            wrefresh(chat_scr);
+        }
+        
+        usleep(100);
     }
 }
 
 void *recv_send() {
-    if (/exit) 
-        is running = 0;
+    struct message_buffer oldmsg;
+    oldmsg.id = 0;
+    
+    while(is_running) {
+        memset(&(*buff_out.msg), 0, BUFFSIZE);
+        sprintf(buff_out.msg, "[Recv: %d] %s\n", buff_out.id, "Chat Test");
+        if(strcmp(buff_out.msg, "/exit\n") == 0) {
+            fprintf(stderr, "Chat is closed\n");
+            is_running = 0;
+            break;
+        }
+        else {
+            buff_out.id++;
+        }
+        usleep(100);
+    }
 }
 
 void cleanup() {
