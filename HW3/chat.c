@@ -22,6 +22,7 @@ char* local_date_string = NULL, *local_time_string = NULL, *elapsed_time_string 
 int         chat_shmid;              // ID value of shared memory
 int         login_shmid;
 char        userID[20];         // ID of sender(a.k.a. user)
+int         userIdx;
 CHAT_INFO*  chat_logs = NULL;   // pointer of chat information which will get the address of shared memory
 LOGIN_INFO*  login_logs = NULL;   // pointer of user login information which will get the address of shared memory
 void *chat_shmaddr = (void*) 0;      // address pointer of chat shared memory
@@ -45,41 +46,82 @@ void init_position() {
     wrefresh(chat_scr);
 }
 
-void init_shm(const int SHM_KEY, const int LIMITS, int *shmid, void *shmaddr) {
+void init_chat_shm() {
     
     // create shared memory for chat
-    *shmid = shmget((SHM_KEY), sizeof(LIMITS), 0666 | IPC_CREAT | IPC_EXCL);
+    chat_shmid = shmget((CHAT_SHM_KEY), sizeof(CHAT_INFO * MAX_CHATS), 0666 | IPC_CREAT | IPC_EXCL);
     
     // if target shared memory already exists, attatch to target shared memory
-    if( *shmid < 0 ) {
+    if( chat_shmid < 0 ) {
         
         // get shared memory for chat
-        *shmid = shmget((key_t)SHM_KEY, sizeof(LIMITS), 0666);
+        chat_shmid = shmget((key_t)CHAT_SHM_KEY, sizeof(LIMITS), 0666);
         
         // attach process to target shared memory
-        *shmaddr = shmat(*shmid, (void*) 0, 0666);
+        chat_shmaddr = shmat(chat_shmid, (void*) 0, 0666);
         
         // if attach error occurs, exit the program
-        if( *((int *)shmaddr) < 0) {
+        if( (int) chat_shmaddr) < 0) {
             perror("shmat attach is failed: ");
             exit(-1);
         }       
     }
     else {
-        *shmaddr = shmat(*shmid, (void*) 0, 0666);
+        chat_shmaddr = shmat(chat_shmid, (void*) 0, 0666);
     }
     
     // dereference shared memory space
-    return shmaddr;
-    
+    chat_logs = (CHAT_INFO*) chat_shmaddr;
 }
 
-void init_log_process() {
-    chat_logs = (CHAT_INFO*) init_shm(CHAT_SHM_KEY, CHAT_INFO * MAX_CHATS, &chat_shmid, &chat_shmaddr);
-    login_logs = (USER_INFO*) init_shm(LOGIN_SHM_KEY, LOGIN_INFO * MAX_USERS, &login_shmid, &login_shmaddr);
+void init_login_shm() {
+    
+    // create shared memory for chat
+    login_shmid = shmget((LOGIN_SHM_KEY), sizeof(LOGIN_INFO * MAX_USERS), 0666 | IPC_CREAT | IPC_EXCL);
+    
+    // if target shared memory already exists, attatch to target shared memory
+    if( login_shmid < 0 ) {
+        
+        // get shared memory for chat
+        login_shmid = shmget((key_t)LOGIN_SHM_KEY, sizeof(LOGIN_INFO * MAX_USERS), 0666);
+        
+        // attach process to target shared memory
+        login_shmaddr = shmat(login_shmid, (void*) 0, 0666);
+        
+        // if attach error occurs, exit the program
+        if( (int) login_shmaddr) < 0) {
+            perror("shmat attach is failed: ");
+            exit(-1);
+        }       
+    }
+    else {
+        login_shmaddr = shmat(login_shmid, (void*) 0, 0666);
+    }
+    
+    // dereference shared memory space
+    login_logs = (USER_INFO*) login_shmaddr;
+    for(int i=0; i<MAX_USERS; i++) {
+        if(strcmp(login_logs[i].userID, userID) == 0) {
+            login_logs[i].isON = 1;
+            userIdx = i;
+            break;
+        }
+        if(strcmp(login_logs[i],userID, "") == 0) {
+            strcpy(login_logs[i].userID, userID);
+            login_logs[i].isON = 1;
+            userIdx = i;
+            break;
+        }
+    }
+}
+
+void init_shm() {
+    init_chat_shm();
+    init_login_shm();
 }
 
 void remove_shm() {
+    login_logs[userIdx].isON = 0;
     if( shmid < 0 ) {
         perror("shmget failed : ");
         exit(-1);
@@ -180,8 +222,13 @@ void *log_account() {
     int cnt = 1;
     char cntstr[100];
     while(is_running) {
-        sprintf(cntstr, "%d", cnt++);
-        wprintw(acclog_scr, cntstr);
+        werase(acclog_scr);
+        for(int i=0; i<MAX_USERS; i++) {
+            if(login_logs[i].isON) {
+                sprintf(cntstr, "%s\n", cnt++);
+                wprintw(acclog_scr, cntstr);
+            }
+        }
         wrefresh(acclog_scr);
         sleep(1);
     }

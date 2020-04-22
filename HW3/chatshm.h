@@ -17,7 +17,7 @@ typedef struct chatInfo {
 
 typedef struct loginInfo {
     char userID[20];
-    bool isON;
+    bool isON = false;
 } LOGIN_INFO;
 
 
