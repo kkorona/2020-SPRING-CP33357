@@ -120,7 +120,7 @@ void *log_account() {
     int cnt = 1;
     char cntstr[100];
     while(is_running) {
-        box( acclog_scr, '|', '-' );
+        mvwvline(acclog_scr, 0, 0, 0, ACCLOG_WINDOW_VLINE);
         sprintf(cntstr, "%d", cnt++);
         wprintw(acclog_scr, cntstr);
         wrefresh(acclog_scr);
