@@ -120,7 +120,6 @@ void *log_account() {
     int cnt = 1;
     char cntstr[100];
     while(is_running) {
-        mvwvline(acclog_scr, 0, 0, 0, ACCLOG_WINDOW_VLINE);
         sprintf(cntstr, "%d", cnt++);
         wprintw(acclog_scr, cntstr);
         wrefresh(acclog_scr);
@@ -131,7 +130,6 @@ void *log_account() {
 
 void *update_time() {
     while(is_running) {
-        box( timer_scr, '|', '-' );
         // relase allocation of previous timer values
         
         // local date options is temporarily deprecated.
