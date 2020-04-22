@@ -61,7 +61,7 @@ void init_chat_shm() {
         chat_shmaddr = shmat(chat_shmid, (void*) 0, 0666);
         
         // if attach error occurs, exit the program
-        if( (int) chat_shmaddr) < 0) {
+        if( (int) chat_shmaddr < 0) {
             perror("shmat attach is failed: ");
             exit(-1);
         }       
@@ -99,7 +99,7 @@ void init_login_shm() {
     }
     
     // dereference shared memory space
-    login_logs = (USER_INFO*) login_shmaddr;
+    login_logs = (LOGIN_INFO*) login_shmaddr;
     for(int i=0; i<MAX_USERS; i++) {
         if(strcmp(login_logs[i].userID, userID) == 0) {
             login_logs[i].isON = 1;
@@ -243,7 +243,7 @@ void *log_account() {
         werase(acclog_scr);
         for(int i=0; i<MAX_USERS; i++) {
             if(login_logs[i].isON) {
-                sprintf(cntstr, "%s\n", cnt++);
+                sprintf(cntstr, "%s\n", login_logs[i].userID);
                 wprintw(acclog_scr, cntstr);
             }
         }
