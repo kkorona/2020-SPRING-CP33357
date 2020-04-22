@@ -1,5 +1,5 @@
 chat.out : chat.o chat_timer.o
-	gcc -o chat.out chat.o chat_timer.o -lncurses -lpthread -Wall
+	gcc -o chat.out chat.o chat_timer.o -lncurses -lpthread
 
 chat.o : chat.c
 	gcc -c -o chat.o chat.c 
