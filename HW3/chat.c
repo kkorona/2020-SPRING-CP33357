@@ -49,13 +49,13 @@ void init_position() {
 void init_chat_shm() {
     
     // create shared memory for chat
-    chat_shmid = shmget((CHAT_SHM_KEY), sizeof(CHAT_INFO * MAX_CHATS), 0666 | IPC_CREAT | IPC_EXCL);
+    chat_shmid = shmget((CHAT_SHM_KEY), sizeof(CHAT_INFO) * MAX_CHATS, 0666 | IPC_CREAT | IPC_EXCL);
     
     // if target shared memory already exists, attatch to target shared memory
     if( chat_shmid < 0 ) {
         
         // get shared memory for chat
-        chat_shmid = shmget((key_t)CHAT_SHM_KEY, sizeof(CHAT_INFO * MAX_CHATS), 0666);
+        chat_shmid = shmget((key_t)CHAT_SHM_KEY, sizeof(CHAT_INFO) * MAX_CHATS, 0666);
         
         // attach process to target shared memory
         chat_shmaddr = shmat(chat_shmid, (void*) 0, 0666);
@@ -77,13 +77,13 @@ void init_chat_shm() {
 void init_login_shm() {
     
     // create shared memory for chat
-    login_shmid = shmget((LOGIN_SHM_KEY), sizeof(LOGIN_INFO * MAX_USERS), 0666 | IPC_CREAT | IPC_EXCL);
+    login_shmid = shmget((LOGIN_SHM_KEY), sizeof(LOGIN_INFO) * MAX_USERS, 0666 | IPC_CREAT | IPC_EXCL);
     
     // if target shared memory already exists, attatch to target shared memory
     if( login_shmid < 0 ) {
         
         // get shared memory for chat
-        login_shmid = shmget((key_t)LOGIN_SHM_KEY, sizeof(LOGIN_INFO * MAX_USERS), 0666);
+        login_shmid = shmget((key_t)LOGIN_SHM_KEY, sizeof(LOGIN_INFO) * MAX_USERS, 0666);
         
         // attach process to target shared memory
         login_shmaddr = shmat(login_shmid, (void*) 0, 0666);
