@@ -4,9 +4,12 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <ncurses.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include "chat.h"
 #include "preference.h"
 #include "chat_timer.h"
+#include "chatshm.h"
 
 WINDOW *input_scr;
 WINDOW *chat_scr;
@@ -15,6 +18,14 @@ WINDOW *timer_scr;
 WINDOW *local_date_wnd, *local_time_wnd, *elapsed_time_wnd;     // subwindow of each timer
 
 char* local_date_string = NULL, *local_time_string = NULL, *elapsed_time_string = NULL; // formatted output value of each timer
+
+int         chat_shmid;              // ID value of shared memory
+int         login_shmid;
+char        userID[20];         // ID of sender(a.k.a. user)
+CHAT_INFO*  chat_logs = NULL;   // pointer of chat information which will get the address of shared memory
+LOGIN_INFO*  login_logs = NULL;   // pointer of user login information which will get the address of shared memory
+void *chat_shmaddr = (void*) 0;      // address pointer of chat shared memory
+void *login_shmaddr = (void*) 0;      // address pointer of user login shared memory
 
 void init_position() {
     input_scr = newwin(INPUT_WINDOW_VLINE, INPUT_WINDOW_HLINE, INPUT_WINDOW_VPOS, INPUT_WINDOW_HPOS);
@@ -32,6 +43,55 @@ void init_position() {
     scrollok(chat_scr, TRUE);
     wprintw(chat_scr, "\n ***** Type /bye to quit!! ***** \n\n");
     wrefresh(chat_scr);
+}
+
+void init_shm(const int SHM_KEY, const int LIMITS, int *shmid, void *shmaddr) {
+    
+    // create shared memory for chat
+    *shmid = shmget((SHM_KEY), sizeof(LIMITS), 0666 | IPC_CREAT | IPC_EXCL);
+    
+    // if target shared memory already exists, attatch to target shared memory
+    if( *shmid < 0 ) {
+        
+        // get shared memory for chat
+        *shmid = shmget((key_t)SHM_KEY, sizeof(LIMITS), 0666);
+        
+        // attach process to target shared memory
+        *shmaddr = shmat(*shmid, (void*) 0, 0666);
+        
+        // if attach error occurs, exit the program
+        if( *((int *)shmaddr) < 0) {
+            perror("shmat attach is failed: ");
+            exit(-1);
+        }       
+    }
+    else {
+        *shmaddr = shmat(*shmid, (void*) 0, 0666);
+    }
+    
+    // dereference shared memory space
+    return shmaddr;
+    
+}
+
+void init_log_process() {
+    chat_logs = (CHAT_INFO*) init_shm(CHAT_SHM_KEY, CHAT_INFO * MAX_CHATS, &chat_shmid, &chat_shmaddr);
+    login_logs = (USER_INFO*) init_shm(LOGIN_SHM_KEY, LOGIN_INFO * MAX_USERS, &login_shmid, &login_shmaddr);
+}
+
+void remove_shm() {
+    if( shmid < 0 ) {
+        perror("shmget failed : ");
+        exit(-1);
+    }
+
+    if(shmctl(shmid, IPC_RMID, 0) < 0) {
+        printf("Failed to delete shared memory\n");
+        exit(-1);
+    }
+    else {
+        printf("Successfully delete shared memory\n");
+    }
 }
 
 void run() {
@@ -59,7 +119,7 @@ void run() {
 
 void *get_input() {
     char tmp[BUFFSIZE];
-    mvwhline(input_scr, 0, 0, 0, col);
+    // mvwhline(input_scr, 0, 0, 0, col);
     while(is_running) {
         mvwgetstr(input_scr, 1, 0, tmp);
         sprintf(buff_in.msg, "%s\n", tmp);
@@ -70,7 +130,7 @@ void *get_input() {
         buff_in.id++;
         wrefresh(chat_scr);
         werase(input_scr);
-        mvwhline(input_scr, 0, 0, 0, col);
+        // mvwhline(input_scr, 0, 0, 0, col);
         wrefresh(input_scr);
         usleep(100);
     }
@@ -185,17 +245,30 @@ void die(char *s) {
     exit(-1);
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    
+    // if user didn't put username as argument, exit the program
+    if( argc < 2 ) {
+        fprintf(stderr,"[Usage]: ./chat USER_ID\n");
+        exit(-1);
+    }
+    
+    // renew username data
+    strcpy(userID, argv[1]);
     
     initscr();
     
     getmaxyx(stdscr, row, col);
     
-    init_position();
+    init_shm();
     
+    init_position();
+        
     run();
     
     endwin();
+    
+    remove_shm();
     
     return 0;
 }

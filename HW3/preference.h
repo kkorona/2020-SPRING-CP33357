@@ -5,6 +5,11 @@
 #ifndef PREFERENCE_H
 #define PREFERENCE_H
 
+// maxmimum number of users in chat
+
+const int MAX_USERS = 100;
+const int MAX_CHATS = 1000;
+
 // coordinate preference options for terminal window
 
 const int TERMINAL_WINDOW_HLINE = 80;
