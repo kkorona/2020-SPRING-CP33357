@@ -184,7 +184,8 @@ void *get_input() {
         mvwgetstr(input_scr, 1, 0, tmp);
         sprintf(buff_in.msg, "%s\n", tmp);
         if(strcmp(buff_in.msg, "/bye\n") == 0) {
-            die("exit");
+            is_runnning = 0;
+            break;
         }
         wprintw(chat_scr, "[Send: %d] > %s", buff_in.id, buff_in.msg);
         buff_in.id++;
@@ -290,6 +291,10 @@ void *update_time() {
     }
     
     return NULL;
+}
+
+void *watch_state() {
+    
 }
 
 void cleanup() {
