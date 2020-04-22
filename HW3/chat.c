@@ -184,7 +184,7 @@ void *get_input() {
         mvwgetstr(input_scr, 1, 0, tmp);
         sprintf(buff_in.msg, "%s\n", tmp);
         if(strcmp(buff_in.msg, "/bye\n") == 0) {
-            is_runnning = 0;
+            is_running = 0;
             break;
         }
         wprintw(chat_scr, "[Send: %d] > %s", buff_in.id, buff_in.msg);
