@@ -55,7 +55,7 @@ void init_chat_shm() {
     if( chat_shmid < 0 ) {
         
         // get shared memory for chat
-        chat_shmid = shmget((key_t)CHAT_SHM_KEY, sizeof(LIMITS), 0666);
+        chat_shmid = shmget((key_t)CHAT_SHM_KEY, sizeof(CHAT_INFO * MAX_CHATS), 0666);
         
         // attach process to target shared memory
         chat_shmaddr = shmat(chat_shmid, (void*) 0, 0666);
@@ -89,7 +89,7 @@ void init_login_shm() {
         login_shmaddr = shmat(login_shmid, (void*) 0, 0666);
         
         // if attach error occurs, exit the program
-        if( (int) login_shmaddr) < 0) {
+        if( (int) login_shmaddr < 0) {
             perror("shmat attach is failed: ");
             exit(-1);
         }       
@@ -106,7 +106,7 @@ void init_login_shm() {
             userIdx = i;
             break;
         }
-        if(strcmp(login_logs[i],userID, "") == 0) {
+        if(strcmp(login_logs[i].userID, "") == 0) {
             strcpy(login_logs[i].userID, userID);
             login_logs[i].isON = 1;
             userIdx = i;
@@ -122,12 +122,30 @@ void init_shm() {
 
 void remove_shm() {
     login_logs[userIdx].isON = 0;
-    if( shmid < 0 ) {
+    for(int i=0; i<MAX_USERS; i++) {
+        if(login_logs[userIdx].isON) {
+            return;
+        }
+    }
+    if( chat_shmid < 0 ) {
         perror("shmget failed : ");
         exit(-1);
     }
 
-    if(shmctl(shmid, IPC_RMID, 0) < 0) {
+    if(shmctl(chat_shmid, IPC_RMID, 0) < 0) {
+        printf("Failed to delete shared memory\n");
+        exit(-1);
+    }
+    else {
+        printf("Successfully delete shared memory\n");
+    }
+    
+    if(login_shmid < 0 ) {
+        perror("shmget failed : ");
+        exit(-1);
+    }
+
+    if(shmctl(login_shmid, IPC_RMID, 0) < 0) {
         printf("Failed to delete shared memory\n");
         exit(-1);
     }
