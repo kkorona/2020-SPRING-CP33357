@@ -8,10 +8,6 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <time.h>
-#include "chat.h"
-#include "preference.h"
-#include "chat_timer.h"
-#include "chatshm.h"
 
 #define INPUT_WINDOW_H 2
 #define BUFFSIZE 1024
