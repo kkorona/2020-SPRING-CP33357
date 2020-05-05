@@ -128,6 +128,12 @@ struct message_buffer buff_out;
 
 int is_running;
 
+void* get_input();
+void* print_chat();
+void* recv_send();
+void* update_time();
+void* log_account();
+
 //returns string contains local date (YYYY-mm-dd-day form)
 void *get_local_date() {
 
