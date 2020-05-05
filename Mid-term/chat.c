@@ -5,9 +5,11 @@
 #include <pthread.h>
 #include <ncurses.h>
 #include <stdbool.h>
+#include <fcntl.h>
+#include <time.h>
+#include <semaphore.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
-#include <time.h>
 
 #define INPUT_WINDOW_H 2
 #define BUFFSIZE 1024
@@ -227,6 +229,9 @@ LOGIN_INFO*  login_logs = NULL;   // pointer of user login information which wil
 void *chat_shmaddr = (void*) 0;      // address pointer of chat shared memory
 void *login_shmaddr = (void*) 0;      // address pointer of user login shared memory
 
+sem_t *login_sem;
+sem_t *chat_sem;
+
 void init_position() {
     input_scr = newwin(INPUT_WINDOW_VLINE, INPUT_WINDOW_HLINE, INPUT_WINDOW_VPOS, INPUT_WINDOW_HPOS);
     chat_scr = newwin(OUTPUT_WINDOW_VLINE, OUTPUT_WINDOW_HLINE, OUTPUT_WINDOW_VPOS, OUTPUT_WINDOW_HPOS);
@@ -274,6 +279,14 @@ void init_chat_shm() {
 }
 
 void init_login_shm() {
+    
+    
+    sem_unlink("loginsem");
+    
+    if((login_sem = sem_open("loginsem", O_CREAT, 0777, 1)) == NULL) {
+        perror("Login Sem Open Error");
+        exit(1);
+    }
     
     // create shared memory for chat
     login_shmid = shmget((LOGIN_SHM_KEY), sizeof(LOGIN_INFO) * MAX_USERS, 0666 | IPC_CREAT | IPC_EXCL);
@@ -376,6 +389,23 @@ void run() {
     
 }
 
+void *FetchMessageFromShmThread() {
+    return NULL;
+}
+
+void *DisplayMessageThread() {
+    return NULL;
+}
+
+void run_alt() {
+    pthread_t thread[2];
+    pthread_create(&thread[0], NULL, FetchMessageFromShmThread, NULL);
+    pthread_create(&thread[1], NULL, DisplayMessageThread, NULL);
+    
+    pthread_join(thread[0], NULL);
+    pthread_join(thread[1], NULL);
+}
+
 void *get_input() {
     char tmp[BUFFSIZE];
     // mvwhline(input_scr, 0, 0, 0, col);
@@ -392,7 +422,7 @@ void *get_input() {
         werase(input_scr);
         // mvwhline(input_scr, 0, 0, 0, col);
         wrefresh(input_scr);
-        usleep(100);
+        usleep(500);
     }
     return NULL;
 }
@@ -411,7 +441,7 @@ void *print_chat() {
             wrefresh(chat_scr);
         }
         
-        usleep(100);
+        usleep(500);
     }
     return NULL;
 }
@@ -448,7 +478,7 @@ void *log_account() {
             }
         }
         wrefresh(acclog_scr);
-        sleep(1);
+        usleep(500);
     }
     return NULL;
 }
@@ -502,6 +532,7 @@ void cleanup() {
     delwin(acclog_scr);
     delwin(timer_scr);
     endwin();
+    sem_close("login_sem");
 }
 
 void die(char *s) {
