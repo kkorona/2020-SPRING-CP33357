@@ -129,10 +129,24 @@ struct message_buffer buff_in;
 struct message_buffer buff_out;
 
 int is_running;
+int current_time;
+
+char local_time_string[BUFFSIZE], elapsed_time_string[BUFFSIZE]; // formatted output value o5f each timer
+
+int         chat_shmid;              // ID value of shared memory
+int         login_shmid;
+char        userID[20];         // ID of sender(a.k.a. user)
+int         userIdx;
+CHAT_INFO*  chat_logs = NULL;   // pointer of chat information which will get the address of shared memory
+LOGIN_INFO*  login_logs = NULL;   // pointer of user login information which will get the address of shared memory
+void *chat_shmaddr = (void*) 0;      // address pointer of chat shared memory
+void *login_shmaddr = (void*) 0;      // address pointer of user login shared memory
+
+sem_t *login_sem;
+sem_t *chat_sem;
 
 void* get_input();
 void* print_chat();
-void* recv_send();
 void* update_time();
 void* log_account();
 
@@ -163,7 +177,7 @@ void *get_local_date() {
 }
 
 //returns string contains local time (hh-mm-ss form)
-void *get_local_time() {
+void get_local_time() {
 
     time_t      now;                    // current time_t value
     struct tm   time_data;              // localtime form of 'now'
@@ -183,16 +197,13 @@ void *get_local_time() {
     formatted_return = malloc(sizeof(char) * BUFFER_SIZE);
     
     // copy buffer contents to return string
-    strcpy(formatted_return, buffer);
-    
-    return formatted_return;
+    strcpy(local_time_string, buffer);
 }
 
 //returns string contains elapsed execution time (hh-mm-ss form)
-void *get_elapsed_time() {
+void get_elapsed_time() {
 
     char        buffer[BUFFER_SIZE];     // buffer contains formatted elapsed execution time
-    char        *formatted_return;       // allocated string array of elapsed execution time value, which is return value of this function
 
     // if start_clock isn't initialized, initialize it with the first call of clock() in this program.
     if(is_start_clock_not_initialized) {
@@ -213,24 +224,8 @@ void *get_elapsed_time() {
     formatted_return = malloc(sizeof(char) * BUFFER_SIZE);
     
     // copy buffer contents to return string
-    strcpy(formatted_return, buffer);
-    return formatted_return;
+    strcpy(elapsed_time_string, buffer);
 }
-
-
-char* local_date_string = NULL, *local_time_string = NULL, *elapsed_time_string = NULL; // formatted output value of each timer
-
-int         chat_shmid;              // ID value of shared memory
-int         login_shmid;
-char        userID[20];         // ID of sender(a.k.a. user)
-int         userIdx;
-CHAT_INFO*  chat_logs = NULL;   // pointer of chat information which will get the address of shared memory
-LOGIN_INFO*  login_logs = NULL;   // pointer of user login information which will get the address of shared memory
-void *chat_shmaddr = (void*) 0;      // address pointer of chat shared memory
-void *login_shmaddr = (void*) 0;      // address pointer of user login shared memory
-
-sem_t *login_sem;
-sem_t *chat_sem;
 
 void init_position() {
     input_scr = newwin(INPUT_WINDOW_VLINE, INPUT_WINDOW_HLINE, INPUT_WINDOW_VPOS, INPUT_WINDOW_HPOS);
@@ -252,14 +247,21 @@ void init_position() {
 
 void init_chat_shm() {
     
+    sem_unlink("chatsem");
+    
+    if((chat_sem = sem_open("chatsem", O_CREAT, 0777, 1)) == NULL) {
+        perror("Chat Sem Open Error");
+        exit(1);
+    }
+    
     // create shared memory for chat
-    chat_shmid = shmget((CHAT_SHM_KEY), sizeof(CHAT_INFO) * MAX_CHATS, 0666 | IPC_CREAT | IPC_EXCL);
+    chat_shmid = shmget((CHAT_SHM_KEY), sizeof(CHAT_INFO), 0666 | IPC_CREAT | IPC_EXCL);
     
     // if target shared memory already exists, attatch to target shared memory
     if( chat_shmid < 0 ) {
         
         // get shared memory for chat
-        chat_shmid = shmget((key_t)CHAT_SHM_KEY, sizeof(CHAT_INFO) * MAX_CHATS, 0666);
+        chat_shmid = shmget((key_t)CHAT_SHM_KEY, sizeof(CHAT_INFO), 0666);
         
         // attach process to target shared memory
         chat_shmaddr = shmat(chat_shmid, (void*) 0, 0666);
@@ -276,6 +278,7 @@ void init_chat_shm() {
     
     // dereference shared memory space
     chat_logs = (CHAT_INFO*) chat_shmaddr;
+    current_time = chat_logs->messageTime;
 }
 
 void init_login_shm() {
@@ -310,6 +313,7 @@ void init_login_shm() {
         login_shmaddr = shmat(login_shmid, (void*) 0, 0666);
     }
     
+    sem_wait(login_sem);
     // dereference shared memory space
     login_logs = (LOGIN_INFO*) login_shmaddr;
     for(int i=0; i<MAX_USERS; i++) {
@@ -325,6 +329,7 @@ void init_login_shm() {
             break;
         }
     }
+    sem_post(login_sem);
 }
 
 void init_shm() {
@@ -345,11 +350,11 @@ void remove_shm() {
     }
 
     if(shmctl(chat_shmid, IPC_RMID, 0) < 0) {
-        printf("Failed to delete shared memory\n");
+        printf("Failed to delete chat shared memory\n");
         exit(-1);
     }
     else {
-        printf("Successfully delete shared memory\n");
+        printf("Successfully delete chat shared memory\n");
     }
     
     if(login_shmid < 0 ) {
@@ -358,11 +363,11 @@ void remove_shm() {
     }
 
     if(shmctl(login_shmid, IPC_RMID, 0) < 0) {
-        printf("Failed to delete shared memory\n");
+        printf("Failed to delete login shared memory\n");
         exit(-1);
     }
     else {
-        printf("Successfully delete shared memory\n");
+        printf("Successfully delete login shared memory\n");
     }
 }
 
@@ -377,15 +382,14 @@ void run() {
     
     pthread_create(&thread[0], NULL, get_input, NULL);
     pthread_create(&thread[1], NULL, print_chat, NULL);
-    pthread_create(&thread[2], NULL, recv_send, NULL);
-    pthread_create(&thread[3], NULL, update_time, NULL);
-    pthread_create(&thread[4], NULL, log_account, NULL);
+    pthread_create(&thread[2], NULL, update_time, NULL);
+    pthread_create(&thread[3], NULL, log_account, NULL);
         
     pthread_join(thread[0], NULL);
     pthread_join(thread[1], NULL);
     pthread_join(thread[2], NULL);
     pthread_join(thread[3], NULL);
-    pthread_join(thread[4], NULL);
+    pthread_join(thread[3], NULL);
     
 }
 
@@ -401,7 +405,6 @@ void run_alt() {
     pthread_t thread[2];
     pthread_create(&thread[0], NULL, FetchMessageFromShmThread, NULL);
     pthread_create(&thread[1], NULL, DisplayMessageThread, NULL);
-    
     pthread_join(thread[0], NULL);
     pthread_join(thread[1], NULL);
 }
@@ -441,27 +444,7 @@ void *print_chat() {
             wrefresh(chat_scr);
         }
         
-        usleep(500);
-    }
-    return NULL;
-}
-
-void *recv_send() {
-    struct message_buffer oldmsg;
-    oldmsg.id = 0;
-    
-    while(is_running) {
-        memset(&(*buff_out.msg), 0, BUFFSIZE);
-        sprintf(buff_out.msg, "[Recv: %d] %s\n", buff_out.id, "Chat Test");
-        if(strcmp(buff_out.msg, "/bye\n") == 0) {
-            fprintf(stderr, "Chat is closed\n");
-            is_running = 0;
-            break;
-        }
-        else {
-            buff_out.id++;
-        }
-        sleep(3);
+        sleep(1);
     }
     return NULL;
 }
@@ -478,34 +461,20 @@ void *log_account() {
             }
         }
         wrefresh(acclog_scr);
-        usleep(500);
+        sleep(1);
     }
     return NULL;
 }
 
 void *update_time() {
     while(is_running) {
-        // relase allocation of previous timer values
         
-        // local date options is temporarily deprecated.
-        /*
-        if(local_date_string != NULL) {
-             free(local_date_string);
-        }
-        */
-        if(local_time_string != NULL) {
-             free(local_time_string);
-        }
-        if(elapsed_time_string != NULL) {
-             free(elapsed_time_string);
-        }
-
         // update the current timer values
         /*
         local_date_string = get_local_date();
         */
-        local_time_string = get_local_time();
-        elapsed_time_string = get_elapsed_time();
+        get_local_time();
+        get_elapsed_time();
         
         /*
         mvwprintw(local_date_wnd, LOCAL_DATE_OUT_VPOS, LOCAL_DATE_OUT_HPOS, local_date_string);
@@ -522,10 +491,6 @@ void *update_time() {
     return NULL;
 }
 
-void *watch_state() {
-    
-}
-
 void cleanup() {
     delwin(input_scr);
     delwin(chat_scr);
@@ -533,6 +498,7 @@ void cleanup() {
     delwin(timer_scr);
     endwin();
     sem_close("login_sem");
+    sem_close("chat_sem");
 }
 
 void die(char *s) {
