@@ -150,39 +150,12 @@ void* print_chat();
 void* update_time();
 void* log_account();
 
-//returns string contains local date (YYYY-mm-dd-day form)
-void *get_local_date() {
-
-    time_t      now;                    // current time_t value
-    struct tm   time_data;              // localtime form of 'now'
-    char        buffer[BUFFER_SIZE];    // buffer contains formatted local date
-    char        *formatted_return;      // allocated string array of formatted date value, which is return value of this function
-
-    // copy current time in 'now'
-    time(&now);
-
-    // format 'now' to localtime format
-    time_data = *localtime(&now);
-    
-    // convert the local date to YYYY-mm-dd-day form and save it to buffer
-    strftime(buffer, sizeof(buffer), "%Y-%m-%d-%a", &time_data);
-
-    // generates allocated string for return
-    formatted_return = malloc(sizeof(char) * BUFFER_SIZE);
-    
-    // copy buffer contents to return string
-    strcpy(formatted_return, buffer);
-    
-    return formatted_return;
-}
-
 //returns string contains local time (hh-mm-ss form)
 void get_local_time() {
 
     time_t      now;                    // current time_t value
     struct tm   time_data;              // localtime form of 'now'
     char        buffer[BUFFER_SIZE];    // buffer contains formatted local time
-    char        *formatted_return;      // allocated string array of formatted time value, which is return value of this function
 
     // copy current time in 'now'
     time(&now);
@@ -192,9 +165,6 @@ void get_local_time() {
     
     // convert the local date to hh-mm-ss form and save it to buffer
     strftime(buffer, sizeof(buffer), "%H-%M-%S", &time_data);
-
-    // generates allocated string for return
-    formatted_return = malloc(sizeof(char) * BUFFER_SIZE);
     
     // copy buffer contents to return string
     strcpy(local_time_string, buffer);
@@ -219,9 +189,6 @@ void get_elapsed_time() {
     
     // save hh-mm-ss form of elapsed execution time to buffer
     sprintf(buffer, "%d-%d-%d", hh,mm,ss);
-
-    // generates allocated string for return
-    formatted_return = malloc(sizeof(char) * BUFFER_SIZE);
     
     // copy buffer contents to return string
     strcpy(elapsed_time_string, buffer);
