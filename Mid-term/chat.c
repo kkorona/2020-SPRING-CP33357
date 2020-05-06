@@ -175,12 +175,6 @@ void get_elapsed_time() {
 
     char        buffer[BUFFER_SIZE];     // buffer contains formatted elapsed execution time
 
-    // if start_clock isn't initialized, initialize it with the first call of clock() in this program.
-    if(is_start_clock_not_initialized) {
-        start_clock = clock();
-        is_start_clock_not_initialized = false;
-    }
-
     double elapsed_time =  (double)((clock() - start_clock)/CLOCKS_PER_SEC);    // clock_t value of elapsed execution time that transformed to second
 
     int hh = (int)elapsed_time / 3600; elapsed_time -= hh * 3600;   // calculate hour from elapsed execution time
@@ -210,6 +204,12 @@ void init_position() {
     scrollok(chat_scr, TRUE);
     wprintw(chat_scr, "\n ***** Type /bye to quit!! ***** \n\n");
     wrefresh(chat_scr);
+    
+    // if start_clock isn't initialized, initialize it with the first call of clock() in this program.
+    if(is_start_clock_not_initialized) {
+        start_clock = clock();
+        is_start_clock_not_initialized = false;
+    }
 }
 
 void init_chat_shm() {
@@ -300,12 +300,14 @@ void init_shm() {
 }
 
 void remove_shm() {
+    sem_wait(login_sem);
     login_logs[userIdx].isON = 0;
     for(int i=0; i<MAX_USERS; i++) {
-        if(login_logs[userIdx].isON) {
+        if(login_logs[userIdx].isON == 1) {
             return;
         }
     }
+    sem_post(login_sem);
     if( chat_shmid < 0 ) {
         perror("shmget failed : ");
         exit(-1);
@@ -387,7 +389,7 @@ void *get_input() {
         werase(input_scr);
         // mvwhline(input_scr, 0, 0, 0, col);
         wrefresh(input_scr);
-        usleep(500);
+        sleep(1);
     }
     return NULL;
 }
@@ -488,15 +490,15 @@ int main(int argc, char* argv[]) {
     
     getmaxyx(stdscr, row, col);
     
-    init_shm();
-    
     init_position();
+    
+    init_shm();
         
     run();
     
-    endwin();
-    
     remove_shm();
+    
+    endwin();
     
     return 0;
 }
