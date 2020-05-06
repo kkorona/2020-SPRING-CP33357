@@ -497,8 +497,8 @@ void cleanup() {
     delwin(acclog_scr);
     delwin(timer_scr);
     endwin();
-    sem_close("login_sem");
-    sem_close("chat_sem");
+    sem_close(login_sem);
+    sem_close(chat_sem);
 }
 
 void die(char *s) {
