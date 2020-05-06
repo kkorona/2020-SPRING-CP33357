@@ -407,7 +407,7 @@ void *print_chat() {
     
     while(is_running) {
         if(chat_logs->messageTime > current_time) {
-            sprintf(buff, "%s > %s", chat_logs->message);
+            sprintf(buff, "%s > %s", chat_logs->userID, chat_logs->message);
             wprintw(chat_scr, buff);
             current_time = chat_logs->messageTime;
             wrefresh(chat_scr);
