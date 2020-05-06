@@ -394,7 +394,7 @@ void *get_input() {
         werase(input_scr);
         // mvwhline(input_scr, 0, 0, 0, col);
         wrefresh(input_scr);
-        usleep(50);
+        sleep(2);
     }
     return NULL;
 }
@@ -430,7 +430,7 @@ void *log_account() {
             }
         }
         wrefresh(acclog_scr);
-        usleep(50);
+        usleep(500);
     }
     return NULL;
 }
