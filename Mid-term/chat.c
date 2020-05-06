@@ -413,7 +413,7 @@ void *print_chat() {
             wrefresh(chat_scr);
         }
         
-        usleep(50);
+        sleep(1);
     }
     return NULL;
 }
@@ -430,7 +430,7 @@ void *log_account() {
             }
         }
         wrefresh(acclog_scr);
-        usleep(500);
+        sleep(1);
     }
     return NULL;
 }
