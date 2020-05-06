@@ -213,9 +213,7 @@ void init_position() {
 }
 
 void init_chat_shm() {
-    
-    sem_unlink("chatsem");
-    
+        
     if((chat_sem = sem_open("chatsem", O_CREAT, 0777, 1)) == NULL) {
         perror("Chat Sem Open Error");
         exit(1);
@@ -249,10 +247,7 @@ void init_chat_shm() {
 }
 
 void init_login_shm() {
-    
-    
-    sem_unlink("loginsem");
-    
+        
     if((login_sem = sem_open("loginsem", O_CREAT, 0777, 1)) == NULL) {
         perror("Login Sem Open Error");
         exit(1);
