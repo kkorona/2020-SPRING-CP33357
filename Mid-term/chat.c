@@ -383,32 +383,37 @@ void *get_input() {
             is_running = 0;
             break;
         }
-        wprintw(chat_scr, "[Send: %d] > %s", buff_in.id, buff_in.msg);
-        buff_in.id++;
+        wprintw(chat_scr, "[Send] > %s", buff_in.msg);
+        sem_wait(chat_sem);
+        chat_logs->messageTime++;
+        strcpy(chat_logs->message, buff_in.msg);
+        strcpy(chat_logs->userID, userID);
+        sem_post(chat_sem);
+        current_time = chat_logs->messageTime;
         wrefresh(chat_scr);
         werase(input_scr);
         // mvwhline(input_scr, 0, 0, 0, col);
         wrefresh(input_scr);
-        sleep(1);
+        usleep(50);
     }
     return NULL;
 }
 
 void *print_chat() {
-    char *msg;
     char buff[BUFFSIZE];
     
     struct message_buffer oldmsg;
     oldmsg.id = 0;
     
     while(is_running) {
-        if(oldmsg.id != buff_out.id) {
-            wprintw(chat_scr, buff_out.msg);
-            oldmsg.id = buff_out.id;
+        if(chat_logs->messageTime > current_time) {
+            sprintf(buff, "%s > %s", chat_logs->message);
+            wprintw(chat_scr, buff);
+            current_time = chat_logs->messageTime;
             wrefresh(chat_scr);
         }
         
-        sleep(1);
+        usleep(50);
     }
     return NULL;
 }
@@ -425,7 +430,7 @@ void *log_account() {
             }
         }
         wrefresh(acclog_scr);
-        sleep(1);
+        usleep(50);
     }
     return NULL;
 }
