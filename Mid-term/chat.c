@@ -340,7 +340,7 @@ void *FetchMessageFromShmThread() {
         sem_wait(chat_sem);
         pthread_mutex_lock(&message_mutex);
         if(chat_logs->messageTime > message_update_buffer.messageTime) {            
-            message_update_buffer.userID = chat_logs->userID;
+            strcpy(message_update_buffer.userID, chat_logs->userID);
             strcpy(message_update_buffer.message,chat_logs->message);
             message_update_buffer.messageTime = chat_logs->messageTime;
             current_time = chat_logs->messageTime;
@@ -355,6 +355,7 @@ void *FetchMessageFromShmThread() {
 }
 
 void *DisplayMessageThread() {
+    char buff[BUFFSIZE];
     while(is_running) {
         pthread_mutex_lock(&message_mutex);
         if(message_update_buffer.messageTime > current_time) {
@@ -432,7 +433,7 @@ void *log_account() {
                 wprintw(acclog_scr, cntstr);
             }
         }
-        sem_postt(login_sem);
+        sem_post(login_sem);
         wrefresh(acclog_scr);
         sleep(1);
     }
