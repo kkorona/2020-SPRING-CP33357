@@ -402,7 +402,7 @@ void *get_input() {
         sleep(2);
     }
     return NULL;
-
+}
 
 void *auto_voice() {
     char auto_buffer[BUFFSIZE];
