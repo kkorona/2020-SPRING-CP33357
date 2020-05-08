@@ -149,11 +149,6 @@ void *login_shmaddr = (void*) 0;      // address pointer of user login shared me
 sem_t *login_sem;
 sem_t *chat_sem;
 
-void* get_input();
-void* print_chat();
-void* update_time();
-void* log_account();
-
 //returns string contains local time (hh-mm-ss form)
 void get_local_time() {
 
@@ -339,29 +334,6 @@ void remove_shm() {
     }
 }
 
-void run() {
-    
-    
-    buff_in.id = 0;
-    buff_out.id = 0;
-    is_running = 1;
-    
-    pthread_t thread[5];
-    
-    pthread_create(&thread[0], NULL, get_input, NULL);
-    pthread_create(&thread[1], NULL, FetchMessageFromShmThread, NULL);
-    pthread_create(&thread[2], NULL, DisplayMessageThread, NULL);
-    pthread_create(&thread[3], NULL, update_time, NULL);
-    pthread_create(&thread[4], NULL, log_account, NULL);
-        
-    pthread_join(thread[0], NULL);
-    pthread_join(thread[1], NULL);
-    pthread_join(thread[2], NULL);
-    pthread_join(thread[3], NULL);
-    pthread_join(thread[4], NULL);
-    
-}
-
 void *FetchMessageFromShmThread() {
         
     while(is_running) {
@@ -512,6 +484,29 @@ void die(char *s) {
     sem_close(chat_sem);
     perror(s);
     exit(-1);
+}
+
+void run() {
+    
+    
+    buff_in.id = 0;
+    buff_out.id = 0;
+    is_running = 1;
+    
+    pthread_t thread[5];
+    
+    pthread_create(&thread[0], NULL, get_input, NULL);
+    pthread_create(&thread[1], NULL, FetchMessageFromShmThread, NULL);
+    pthread_create(&thread[2], NULL, DisplayMessageThread, NULL);
+    pthread_create(&thread[3], NULL, update_time, NULL);
+    pthread_create(&thread[4], NULL, log_account, NULL);
+        
+    pthread_join(thread[0], NULL);
+    pthread_join(thread[1], NULL);
+    pthread_join(thread[2], NULL);
+    pthread_join(thread[3], NULL);
+    pthread_join(thread[4], NULL);
+    
 }
 
 int main(int argc, char* argv[]) {
