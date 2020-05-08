@@ -97,6 +97,9 @@ const int BUFFER_SIZE = 80;                     // constant integer for buffer s
 clock_t start_clock;                            // clock_t value, recorded when program execution starts
 bool is_start_clock_not_initialized = false;    // ="start_clock isn't initialized"
 
+pthread_mutex_t message_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t message_cond = PTHREAD_COND_INITIALIZER;
+
 int row;
 int col;
 
@@ -137,6 +140,7 @@ int         chat_shmid;              // ID value of shared memory
 int         login_shmid;
 char        userID[20];         // ID of sender(a.k.a. user)
 int         userIdx;
+CHAT_INFO message_update_buffer;
 CHAT_INFO*  chat_logs = NULL;   // pointer of chat information which will get the address of shared memory
 LOGIN_INFO*  login_logs = NULL;   // pointer of user login information which will get the address of shared memory
 void *chat_shmaddr = (void*) 0;      // address pointer of chat shared memory
@@ -345,32 +349,53 @@ void run() {
     pthread_t thread[5];
     
     pthread_create(&thread[0], NULL, get_input, NULL);
-    pthread_create(&thread[1], NULL, print_chat, NULL);
-    pthread_create(&thread[2], NULL, update_time, NULL);
-    pthread_create(&thread[3], NULL, log_account, NULL);
+    pthread_create(&thread[1], NULL, FetchMessageFromShmThread, NULL);
+    pthread_create(&thread[2], NULL, DisplayMessageThread, NULL);
+    pthread_create(&thread[3], NULL, update_time, NULL);
+    pthread_create(&thread[4], NULL, log_account, NULL);
         
     pthread_join(thread[0], NULL);
     pthread_join(thread[1], NULL);
     pthread_join(thread[2], NULL);
     pthread_join(thread[3], NULL);
-    pthread_join(thread[3], NULL);
+    pthread_join(thread[4], NULL);
     
 }
 
 void *FetchMessageFromShmThread() {
+        
+    while(is_running) {
+        sem_wait(chat_sem);
+        pthread_mutex_lock(&message_mutex);
+        if(chat_logs->messageTime > message_update_buffer.messageTime) {            
+            message_update_buffer.userID = chat_logs->userID;
+            strcpy(message_update_buffer.message,chat_logs->message);
+            message_update_buffer.messageTime = chat_logs->messageTime;
+            current_time = chat_logs->messageTime;
+        }
+        pthread_cond_signal(&message_cond);
+        pthread_cond_wait(&message_cond, &message_mutex);
+        pthread_mutex_unlock(&message_mutex);
+        sem_post(chat_sem);
+        usleep(500);
+    }
     return NULL;
 }
 
 void *DisplayMessageThread() {
+    while(is_running) {
+        pthread_mutex_lock(&message_mutex);
+        if(message_update_buffer.messageTime > current_time) {
+            sprintf(buff, "%s > %s", message_update_buffer.userID, message_update_buffer.message);
+            current_time = message_update_buffer.messageTime;
+            wprintw(chat_scr, message_update_buffer.message);
+            wrefresh(chat_scr);
+        }
+        pthread_cond_signal(&message_cond);
+        pthread_cond_wait(&message_cond, &message_mutex);
+        pthread_mutex_unlock(&message_mutex);
+    }
     return NULL;
-}
-
-void run_alt() {
-    pthread_t thread[2];
-    pthread_create(&thread[0], NULL, FetchMessageFromShmThread, NULL);
-    pthread_create(&thread[1], NULL, DisplayMessageThread, NULL);
-    pthread_join(thread[0], NULL);
-    pthread_join(thread[1], NULL);
 }
 
 void *get_input() {
@@ -385,15 +410,19 @@ void *get_input() {
         }
         wprintw(chat_scr, "[Send] > %s", buff_in.msg);
         sem_wait(chat_sem);
+        pthread_mutex_lock(&message_mutex);
         chat_logs->messageTime++;
         strcpy(chat_logs->message, buff_in.msg);
         strcpy(chat_logs->userID, userID);
-        sem_post(chat_sem);
         current_time = chat_logs->messageTime;
         wrefresh(chat_scr);
         werase(input_scr);
         // mvwhline(input_scr, 0, 0, 0, col);
         wrefresh(input_scr);
+        pthread_cond_signal(&message_cond);
+        pthread_cond_wait(&message_cond, &message_mutex);
+        pthread_mutex_unlock(&message_mutex);
+        sem_post(chat_sem);
         sleep(2);
     }
     return NULL;
@@ -406,14 +435,15 @@ void *print_chat() {
     oldmsg.id = 0;
     
     while(is_running) {
+        sem_wait(chat_sem);
         if(chat_logs->messageTime > current_time) {
             sprintf(buff, "%s > %s", chat_logs->userID, chat_logs->message);
             wprintw(chat_scr, buff);
             current_time = chat_logs->messageTime;
             wrefresh(chat_scr);
         }
-        
-        sleep(1);
+        sem_post(chat_sem);
+        usleep(500);
     }
     return NULL;
 }
@@ -423,12 +453,14 @@ void *log_account() {
     char cntstr[100];
     while(is_running) {
         werase(acclog_scr);
+        sem_wait(login_sem);        
         for(int i=0; i<MAX_USERS; i++) {
             if(login_logs[i].isON) {
                 sprintf(cntstr, "%s\n", login_logs[i].userID);
                 wprintw(acclog_scr, cntstr);
             }
         }
+        sem_postt(login_sem);
         wrefresh(acclog_scr);
         sleep(1);
     }
@@ -476,6 +508,8 @@ void die(char *s) {
     delwin(acclog_scr);
     delwin(timer_scr);
     endwin();
+    sem_close(login_sem);
+    sem_close(chat_sem);
     perror(s);
     exit(-1);
 }
