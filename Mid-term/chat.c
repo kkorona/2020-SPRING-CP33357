@@ -133,6 +133,7 @@ struct message_buffer buff_out;
 
 int is_running;
 int current_time;
+int flag = 0;
 
 char local_time_string[BUFFSIZE], elapsed_time_string[BUFFSIZE]; // formatted output value o5f each timer
 
@@ -345,6 +346,7 @@ void *FetchMessageFromShmThread() {
             message_update_buffer.messageTime = chat_logs->messageTime;
             current_time = chat_logs->messageTime;
         }
+        flag = 1;
         pthread_cond_signal(&message_cond);
         pthread_cond_wait(&message_cond, &message_mutex);
         pthread_mutex_unlock(&message_mutex);
@@ -358,6 +360,10 @@ void *DisplayMessageThread() {
     char buff[BUFFSIZE];
     while(is_running) {
         pthread_mutex_lock(&message_mutex);
+        while(flag == 0)
+            pthread_cond_wait(&message_cond, &message_mutex);
+        
+        flag = 0;
         if(message_update_buffer.messageTime > current_time) {
             sprintf(buff, "%s > %s", message_update_buffer.userID, message_update_buffer.message);
             current_time = message_update_buffer.messageTime;
@@ -365,7 +371,6 @@ void *DisplayMessageThread() {
             wrefresh(chat_scr);
         }
         pthread_cond_signal(&message_cond);
-        pthread_cond_wait(&message_cond, &message_mutex);
         pthread_mutex_unlock(&message_mutex);
     }
     return NULL;
@@ -392,32 +397,46 @@ void *get_input() {
         werase(input_scr);
         // mvwhline(input_scr, 0, 0, 0, col);
         wrefresh(input_scr);
-        pthread_cond_signal(&message_cond);
-        pthread_cond_wait(&message_cond, &message_mutex);
         pthread_mutex_unlock(&message_mutex);
         sem_post(chat_sem);
         sleep(2);
     }
     return NULL;
-}
 
-void *print_chat() {
+
+void *auto_voice() {
+    char auto_buffer[BUFFSIZE];
     char buff[BUFFSIZE];
-    
-    struct message_buffer oldmsg;
-    oldmsg.id = 0;
-    
-    while(is_running) {
-        sem_wait(chat_sem);
-        if(chat_logs->messageTime > current_time) {
-            sprintf(buff, "%s > %s", chat_logs->userID, chat_logs->message);
-            wprintw(chat_scr, buff);
-            current_time = chat_logs->messageTime;
-            wrefresh(chat_scr);
-        }
-        sem_post(chat_sem);
-        usleep(500);
+    if(strcmp(userID, "Jico") == 0) {
+        strcpy(auto_buffer, "Hello! My name is Jico I love to sing any song-");
     }
+    else if(strcmp(userID, "Izzy") == 0) {
+        strcpy(auto_buffer, "Hi!! I am Izzy I like to play on the stage. Ho-");
+    }
+    else {
+        return NULL;
+    }
+    
+    int cnt = 1;
+    while(is_running) {
+        sprintf(buff, "%s%d\n", auto_buffer, cnt );
+        cnt++;
+        wprintw(chat_scr, "[Send] > %s", buff);
+        sem_wait(chat_sem);
+        pthread_mutex_lock(&message_mutex);
+        chat_logs->messageTime++;
+        strcpy(chat_logs->message, buff);
+        strcpy(chat_logs->userID, userID);
+        current_time = chat_logs->messageTime;
+        wrefresh(chat_scr);
+        werase(input_scr);
+        // mvwhline(input_scr, 0, 0, 0, col);
+        wrefresh(input_scr);
+        pthread_mutex_unlock(&message_mutex);
+        sem_post(chat_sem);
+        sleep(1);
+    }
+    
     return NULL;
 }
 
