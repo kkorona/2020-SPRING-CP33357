@@ -1,2 +1,4 @@
-daemon: main.cpp
-	g++ -o daemon main.cpp
+daemon: main.c
+	gcc -o daemon main.c
+clean:
+	rm daemon
