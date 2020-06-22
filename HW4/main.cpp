@@ -9,6 +9,9 @@
 #include <string.h>
 #include <utmp.h>
 #include <time.h>
+#include <string>
+#include <map>
+using namespace std;
 
 int main(void) {
 
@@ -70,20 +73,42 @@ int main(void) {
     close(STDIN_FILENO);
     /* Daemon-specific initialization goes here */
     printf("starting daemon...\n");
+    map <string, int> user_state;
     /* An infinite loop */
     int cnt = 15;
     while (1) {
         char log_buff[40];
         /* Do some task here ... */
-        fStream = fopen(LOG_PATH, "w");
+        for(auto& c : user_state) {
+            c.second = -1;
+        }
+        fStream = fopen(LOG_PATH, "a");
         setutent();
         while((utx = getutent()) != NULL) {
             if(utx->ut_type != USER_PROCESS) continue;
             the_time = utx->ut_time;
             tm_ptr = localtime(&the_time);
             sprintf(now_local_time, "%d/%02d/%02d %02d:%02d", tm_ptr->tm_year+1900, tm_ptr->tm_mon+1, tm_ptr->tm_mday, tm_ptr->tm_hour, tm_ptr->tm_min);
-            sprintf(log_buff, "%10s %s\n", utx->ut_name, now_local_time);
-            fwrite(log_buff, strlen(log_buff), 1, fStream);
+            if(user_state[string(utx->ut_name)] == 0) {
+                sprintf(log_buff, "%10s login : %s\n", utx->ut_name, now_local_time);
+                fwrite(log_buff, strlen(log_buff), 1, fStream);
+                user_state[string(utx->ut_name)] = 1;
+            }
+            else {
+                user_state[string(utx->ut_name)] = 1;
+            }
+        }
+        time(&the_time);
+        tm_ptr = localtime(&the_time);
+        sprintf(now_local_time, "%d/%02d/%02d %02d:%02d", tm_ptr->tm_year+1900, tm_ptr->tm_mon+1, tm_ptr->tm_mday, tm_ptr->tm_hour, tm_ptr->tm_min);
+        for(auto c : user_state) {
+            if(c.second == -1) {
+                char ch[100];
+                strcpy(ch,(c.first).c_str());
+                sprintf(log_buff, "%10s logout : %s\n", ch, now_local_time);
+                fwrite(log_buff, strlen(log_buff), 1, fStream);
+                user_state.erase(c.first);
+            }
         }
         fclose(fStream);
         sleep(2); /* wait 2 seconds */

@@ -7,8 +7,7 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <string.h>
-#include <utmp.h>
-#include <time.h>
+#include <utmpx.h>
 
 int main(void) {
 
@@ -16,10 +15,7 @@ int main(void) {
     char LOG_PATH[] = "/tmp/201624476/cse201624476";
     FILE *fStream;
 
-    struct utmp *utx;
-    time_t the_time;
-    struct tm *tm_ptr;
-    char now_local_time[50];
+    struct utmpx *utx;
 
     if(access(LOGDIR_PATH, R_OK | W_OK) != 0) {
         if(mkdir(LOGDIR_PATH, 0777) == -1 && errno != EEXIST) {
@@ -30,6 +26,8 @@ int main(void) {
 
     fStream = fopen(LOG_PATH, "a+");
     fclose(fStream); 
+
+#ifdef WITHS
 
     /* Our process ID and Session ID */
     pid_t pid, sid;
@@ -69,24 +67,24 @@ int main(void) {
 
     close(STDIN_FILENO);
     /* Daemon-specific initialization goes here */
+#endif
     printf("starting daemon...\n");
     /* An infinite loop */
-    int cnt = 15;
+    int cnt = 1;
     while (1) {
         char log_buff[40];
         /* Do some task here ... */
-        fStream = fopen(LOG_PATH, "w");
-        setutent();
-        while((utx = getutent()) != NULL) {
+        printf("loading utx..\n");
+        fStream = fopen(LOG_PATH, "a");
+        while((utx = getutxent()) != NULL) {
             if(utx->ut_type != USER_PROCESS) continue;
-            the_time = utx->ut_time;
-            tm_ptr = localtime(&the_time);
-            sprintf(now_local_time, "%d/%02d/%02d %02d:%02d", tm_ptr->tm_year+1900, tm_ptr->tm_mon+1, tm_ptr->tm_mday, tm_ptr->tm_hour, tm_ptr->tm_min);
-            sprintf(log_buff, "%10s %s\n", utx->ut_name, now_local_time);
+            sprintf(log_buff, "%10s %s\n", utx->ut_user, ctime(&utx->ut_tv.tv_sec));
+            printf("%10s %s\n", utx->ut_user, ctime(&utx->ut_tv.tv_sec));
             fwrite(log_buff, strlen(log_buff), 1, fStream);
         }
         fclose(fStream);
         sleep(2); /* wait 2 seconds */
+        cnt++;
         if(cnt == 15) {
             /* display logwatchdog every 30 secs */
             printf("\n---------------\n");
@@ -104,9 +102,6 @@ int main(void) {
             fclose(fStream);
             free(buffer);
             cnt = 0;
-         }
-         else  {
-             cnt++;
          }
     }
     fclose(fStream);
